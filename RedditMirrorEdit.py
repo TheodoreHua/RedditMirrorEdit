@@ -237,7 +237,11 @@ if __name__ == "__main__":
                         comments_since_last_save += 1
             except (Exception,):
                 try:
-                    print("Error parsing comment {}, skipping - {}".format(comment.id, comment.permalink))
+                    print(
+                        "Error parsing comment {}, skipping - {}".format(
+                            comment.id, comment.permalink
+                        )
+                    )
                 except (Exception,):
                     print("Error parsing comment, skipping")
 
@@ -300,7 +304,11 @@ if __name__ == "__main__":
                 comment.edit(replacement_message)
             except (Exception,):
                 try:
-                    print("Error editing comment {}, skipping - {}".format(comment.id, comment.permalink))
+                    print(
+                        "Error editing comment {}, skipping - {}".format(
+                            comment.id, comment.permalink
+                        )
+                    )
                 except (Exception,):
                     print("Error editing comment, skipping")
 
