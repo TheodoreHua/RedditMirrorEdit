@@ -148,13 +148,19 @@ if __name__ == "__main__":
                 redirect_uri="http://localhost:8000",
             )
             state = str(randint(0, 65000))
-            url = reddit.auth.url(scopes=["read", "edit", "history", "identity"], state=state, duration="permanent")
+            url = reddit.auth.url(
+                scopes=["read", "edit", "history", "identity"],
+                state=state,
+                duration="permanent",
+            )
             wbopen(url)
             reddit.auth.authorize(receive_code(state))
         else:
             username = input("Username (wo/ u/ prefix): ").strip()
             password = getpass("Password: ")
-            two_factor_code = input("Enter your 2FA Code (if none, leave blank): ").strip()
+            two_factor_code = input(
+                "Enter your 2FA Code (if none, leave blank): "
+            ).strip()
             if len(two_factor_code) > 0:
                 password += ":" + two_factor_code
             reddit = praw.Reddit(
@@ -162,7 +168,7 @@ if __name__ == "__main__":
                 client_secret=environ["CLIENT_SECRET"],
                 user_agent="RedditMirrorEdit Job {}".format(JOB_ID),
                 username=username,
-                password=password
+                password=password,
             )
             del password
         reddit.validate_on_submit = True
