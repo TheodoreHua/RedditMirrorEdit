@@ -1,12 +1,15 @@
 import argparse
+import socket
 from getpass import getpass
 from hashlib import sha256
 from itertools import zip_longest
 from json import dump
 from os import environ, mkdir
 from os.path import isfile, isdir
+from random import randint
 from re import compile
 from uuid import uuid4
+from webbrowser import open as wbopen
 
 import praw
 import praw.models
@@ -25,6 +28,37 @@ def merge_iterators(*iterators):
         for j in i:
             if j is not None:
                 yield j
+
+
+def receive_code(state):
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(("localhost", 8000))
+    server.listen(1)
+    client = server.accept()[0]
+    server.close()
+    data = client.recv(1024).decode("utf-8")
+    param_tokens = data.split(" ", 2)[1].split("?", 1)[1].split("&")
+    params = {
+        key: value for (key, value) in [token.split("=") for token in param_tokens]
+    }
+    if state != params["state"]:
+        client.send(
+            "HTTP/1.1 200 OK\r\n\r\nState Mismatch\nExpected {} Received: {}".format(
+                state, params["state"]
+            ).encode("utf-8")
+        )
+        client.close()
+        return None
+    elif "error" in params:
+        client.send("HTTP/1.1 200 OK\r\n\r\n{}".format(params["error"]).encode("utf-8"))
+        client.close()
+        return None
+    client.send(
+        "HTTP/1.1 200 OK\r\n\r\nSuccess, you may close this window.".encode("utf-8")
+    )
+    client.close()
+    return params["code"]
 
 
 if __name__ == "__main__":
@@ -77,6 +111,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Edit the comment twice for the theoretical singular backup Reddit keeps",
     )
+    parser.add_argument(
+        "--oauth",
+        action="store_true",
+        help="Use OAuth instead of username/password, needed for 2FA",
+    )
 
     parse = parser.parse_args()
 
@@ -101,23 +140,35 @@ if __name__ == "__main__":
     JOB_ID = str(uuid4())
 
     try:
-        username = input("Username (wo/ u/ prefix): ").strip()
-        password = getpass("Password: ")
-        two_factor_code = input("Enter your 2FA Code (if none, leave blank): ").strip()
-        if len(two_factor_code) > 0:
-            password += ":" + two_factor_code
-        reddit = praw.Reddit(
-            client_id=environ["CLIENT_ID"],
-            client_secret=environ["CLIENT_SECRET"],
-            user_agent="RedditMirrorEdit Job {}".format(JOB_ID),
-            username=username,
-            password=password
-        )
-        del password
+        if parse.oauth:
+            reddit = praw.Reddit(
+                client_id=environ["CLIENT_ID"],
+                client_secret=environ["CLIENT_SECRET"],
+                user_agent="RedditMirrorEdit Job {}".format(JOB_ID),
+                redirect_uri="http://localhost:8000",
+            )
+            state = str(randint(0, 65000))
+            url = reddit.auth.url(scopes=["read", "edit", "history", "identity"], state=state, duration="permanent")
+            wbopen(url)
+            reddit.auth.authorize(receive_code(state))
+        else:
+            username = input("Username (wo/ u/ prefix): ").strip()
+            password = getpass("Password: ")
+            two_factor_code = input("Enter your 2FA Code (if none, leave blank): ").strip()
+            if len(two_factor_code) > 0:
+                password += ":" + two_factor_code
+            reddit = praw.Reddit(
+                client_id=environ["CLIENT_ID"],
+                client_secret=environ["CLIENT_SECRET"],
+                user_agent="RedditMirrorEdit Job {}".format(JOB_ID),
+                username=username,
+                password=password
+            )
+            del password
         reddit.validate_on_submit = True
         me: praw.models.Redditor = reddit.user.me()
     except OAuthException as e:
-        print("Invalid credentials, check your username, password, and/or 2FA code")
+        print("Invalid credentials. If you have 2FA enabled, you must use --oauth.")
         exit()
 
     MAP_FILE = "jobs/{}/map.json".format(JOB_ID)
