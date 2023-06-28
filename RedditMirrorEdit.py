@@ -21,6 +21,7 @@ EXPECTED = [
     "CLIENT_ID",
     "CLIENT_SECRET",
 ]
+USER_MENTION_REGEX = compile(r"(<a href=\"/?u/[a-zA-Z0-9_-]+?\">/?u/[a-zA-Z0-9_-]+?</a>|/?u/[a-zA-Z0-9_-]+)")
 
 
 def merge_iterators(*iterators):
@@ -88,6 +89,11 @@ if __name__ == "__main__":
         "--whitelist-sub",
         action="append",
         help="Whitelist any comments in this subreddit (case insensitive)",
+    )
+    parser.add_argument(
+        "--remove-mentions",
+        action="store_true",
+        help="Removes mentions of all usernames in comments",
     )
     parser.add_argument(
         "-y",
@@ -218,7 +224,11 @@ if __name__ == "__main__":
                 # Prerequisite Content
                 body = comment.body_html if parse.html else comment.body
                 comment_hash = sha256(body.encode("utf-8")).hexdigest()
-                filename = "jobs/{}/{}.{}".format(JOB_ID, comment_hash, FILE_EXTENSION)
+                filename = "jobs/{}/{}{}".format(JOB_ID, comment_hash, FILE_EXTENSION)
+
+                # Remove Mentions
+                if parse.remove_mentions:
+                    body = USER_MENTION_REGEX.sub("", body)
 
                 # Save
                 map_dict[comment.id] = comment_hash
@@ -263,10 +273,10 @@ if __name__ == "__main__":
 
     # Confirmation
     if not parse.yes:
-        num = str(len(to_edit))
+        num = len(to_edit)
         print(
-            "Found {} comments to edit, to continue, enter the number of comments, 'n'/'N' to cancel.".format(
-                num
+            "Found {:,} ({:,} unique) comments to edit, to continue, enter the number of comments, 'n'/'N' to cancel.".format(
+                num, len(set(map_dict.values()))
             )
         )
         print(
@@ -276,7 +286,7 @@ if __name__ == "__main__":
         )
         while True:
             inp = input().strip()
-            if inp == num:
+            if inp == str(num):
                 break
             elif inp.lower() == "n":
                 print("Exiting...")
