@@ -225,12 +225,11 @@ if __name__ == "__main__":
 
                 # Prerequisite Content
                 body = comment.body_html if parse.html else comment.body
-                comment_hash = sha256(body.encode("utf-8")).hexdigest()
-                filename = "jobs/{}/{}{}".format(JOB_ID, comment_hash, FILE_EXTENSION)
-
-                # Remove Mentions
                 if parse.remove_mentions:
                     body = USER_MENTION_REGEX.sub("[USER MENTION REMOVED]", body)
+
+                comment_hash = sha256(body.encode("utf-8")).hexdigest()
+                filename = "jobs/{}/{}{}".format(JOB_ID, comment_hash, FILE_EXTENSION)
 
                 # Save
                 map_dict[comment.id] = comment_hash
