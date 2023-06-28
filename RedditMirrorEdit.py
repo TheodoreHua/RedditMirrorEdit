@@ -22,7 +22,7 @@ EXPECTED = [
     "CLIENT_SECRET",
 ]
 USER_MENTION_REGEX = compile(
-    r"(<a href=\"/?u/[a-zA-Z0-9_-]+?\">/?u/[a-zA-Z0-9_-]+?</a>|(^|\s)/?u/[a-zA-Z0-9_-]+)"
+    r"(^|\s)(<a href=\"/?u/[a-zA-Z0-9_-]+?\">/?u/[a-zA-Z0-9_-]+?</a>|/?u/[a-zA-Z0-9_-]+)"
 )
 
 
@@ -226,7 +226,7 @@ if __name__ == "__main__":
                 # Prerequisite Content
                 body = comment.body_html if parse.html else comment.body
                 if parse.remove_mentions:
-                    body = USER_MENTION_REGEX.sub("[USER MENTION REMOVED]", body)
+                    body = USER_MENTION_REGEX.sub(" [USER MENTION REMOVED]", body)
 
                 comment_hash = sha256(body.encode("utf-8")).hexdigest()
                 filename = "jobs/{}/{}{}".format(JOB_ID, comment_hash, FILE_EXTENSION)
