@@ -202,38 +202,44 @@ if __name__ == "__main__":
             me.comments.new(limit=None),
             me.comments.top(limit=None),
         ):
-            comment: praw.models.Comment
+            try:
+                comment: praw.models.Comment
 
-            # Skips
-            if comment.id in map_dict:
-                continue
-            if comment.subreddit.display_name.lower() in whitelist_subs:
-                continue
-            if any(i in comment.body for i in whitelist_strings):
-                continue
-            if any(i.search(comment.body) for i in whitelist_regexes):
-                continue
+                # Skips
+                if comment.id in map_dict:
+                    continue
+                if comment.subreddit.display_name.lower() in whitelist_subs:
+                    continue
+                if any(i in comment.body for i in whitelist_strings):
+                    continue
+                if any(i.search(comment.body) for i in whitelist_regexes):
+                    continue
 
-            # Prerequisite Content
-            body = comment.body_html if parse.html else comment.body
-            comment_hash = sha256(body.encode("utf-8")).hexdigest()
-            filename = "jobs/{}/{}.{}".format(JOB_ID, comment_hash, FILE_EXTENSION)
+                # Prerequisite Content
+                body = comment.body_html if parse.html else comment.body
+                comment_hash = sha256(body.encode("utf-8")).hexdigest()
+                filename = "jobs/{}/{}.{}".format(JOB_ID, comment_hash, FILE_EXTENSION)
 
-            # Save
-            map_dict[comment.id] = comment_hash
-            to_edit[comment.id] = comment
-            if not isfile(filename):
-                with open(filename, "w", encoding="utf-8") as f:
-                    f.write(body)
+                # Save
+                map_dict[comment.id] = comment_hash
+                to_edit[comment.id] = comment
+                if not isfile(filename):
+                    with open(filename, "w", encoding="utf-8") as f:
+                        f.write(body)
 
-            # Save Map
-            if comments_since_last_save != 0:
-                if comments_since_last_save >= parse.map_save_interval:
-                    with open(MAP_FILE, "w", encoding="utf-8") as f:
-                        dump(map_dict, f)
-                    comments_since_last_save = 1
-                else:
-                    comments_since_last_save += 1
+                # Save Map
+                if comments_since_last_save != 0:
+                    if comments_since_last_save >= parse.map_save_interval:
+                        with open(MAP_FILE, "w", encoding="utf-8") as f:
+                            dump(map_dict, f)
+                        comments_since_last_save = 1
+                    else:
+                        comments_since_last_save += 1
+            except (Exception,):
+                try:
+                    print("Error parsing comment {}, skipping - {}".format(comment.id, comment.permalink))
+                except (Exception,):
+                    print("Error parsing comment, skipping")
 
             # Progress Bar
             bar()
@@ -277,20 +283,26 @@ if __name__ == "__main__":
     # Edit
     with alive_bar(len(to_edit)) as bar:
         for comment_id, comment in to_edit.items():
-            comment: praw.models.Comment
+            try:
+                comment: praw.models.Comment
 
-            # Prerequisite Content
-            comment_hash = map_dict[comment_id]
-            replacement_message = parse.edit_text.replace(
-                "%{hash}", comment_hash
-            ).replace("%{id}", comment_id)
+                # Prerequisite Content
+                comment_hash = map_dict[comment_id]
+                replacement_message = parse.edit_text.replace(
+                    "%{hash}", comment_hash
+                ).replace("%{id}", comment_id)
 
-            # Edit
-            if parse.edit_twice:
-                comment.edit(
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sodales ut eu sem integer vitae justo eget magna fermentum."
-                )
-            comment.edit(replacement_message)
+                # Edit
+                if parse.edit_twice:
+                    comment.edit(
+                        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sodales ut eu sem integer vitae justo eget magna fermentum."
+                    )
+                comment.edit(replacement_message)
+            except (Exception,):
+                try:
+                    print("Error editing comment {}, skipping - {}".format(comment.id, comment.permalink))
+                except (Exception,):
+                    print("Error editing comment, skipping")
 
             # Progress Bar
             bar()
