@@ -21,7 +21,9 @@ EXPECTED = [
     "CLIENT_ID",
     "CLIENT_SECRET",
 ]
-USER_MENTION_REGEX = compile(r"(<a href=\"/?u/[a-zA-Z0-9_-]+?\">/?u/[a-zA-Z0-9_-]+?</a>|/?u/[a-zA-Z0-9_-]+)")
+USER_MENTION_REGEX = compile(
+    r"(<a href=\"/?u/[a-zA-Z0-9_-]+?\">/?u/[a-zA-Z0-9_-]+?</a>|/?u/[a-zA-Z0-9_-]+)"
+)
 
 
 def merge_iterators(*iterators):
