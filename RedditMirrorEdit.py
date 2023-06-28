@@ -230,7 +230,7 @@ if __name__ == "__main__":
 
                 # Remove Mentions
                 if parse.remove_mentions:
-                    body = USER_MENTION_REGEX.sub("", body)
+                    body = USER_MENTION_REGEX.sub("[USER MENTION REMOVED]", body)
 
                 # Save
                 map_dict[comment.id] = comment_hash
