@@ -22,7 +22,7 @@ EXPECTED = [
     "CLIENT_SECRET",
 ]
 USER_MENTION_REGEX = compile(
-    r"(<a href=\"/?u/[a-zA-Z0-9_-]+?\">/?u/[a-zA-Z0-9_-]+?</a>|/?u/[a-zA-Z0-9_-]+)"
+    r"(<a href=\"/?u/[a-zA-Z0-9_-]+?\">/?u/[a-zA-Z0-9_-]+?</a>|(^|\s)/?u/[a-zA-Z0-9_-]+)"
 )
 
 
