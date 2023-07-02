@@ -339,15 +339,15 @@ if __name__ == "__main__":
                         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sodales ut eu sem integer vitae justo eget magna fermentum."
                     )
                 comment.edit(replacement_message)
-            except (Exception,):
+            except (Exception,) as e:
                 try:
                     print(
-                        "Error editing comment {}, skipping - {}".format(
-                            comment.id, comment.permalink
+                        "Error ({}) editing comment {}, skipping - {}".format(
+                            repr(e), comment.id, comment.permalink
                         )
                     )
-                except (Exception,):
-                    print("Error editing comment, skipping")
+                except (Exception,) as e:
+                    print("Error ({}) editing comment, skipping".format(repr(e)))
 
             # Progress Bar
             bar()
