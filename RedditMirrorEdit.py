@@ -1,4 +1,5 @@
 import argparse
+import csv
 import socket
 from getpass import getpass
 from hashlib import sha256
@@ -73,6 +74,11 @@ if __name__ == "__main__":
         "edit_text",
         type=str,
         help="What to replace your comments with. Valid placeholders are: '%{hash}', '%{id}' (without single quotes).",
+    )
+    parser.add_argument(
+        "--csv",
+        type=str,
+        help="CSV file from Reddit GDPR data request. This will be much more comprehensive than the API.",
     )
     parser.add_argument(
         "-w",
@@ -202,14 +208,34 @@ if __name__ == "__main__":
         [i.lower() for i in parse.whitelist_sub] if parse.whitelist_sub else []
     )
 
-    # Save all discovered comments
-    with alive_bar(unknown="stars") as bar:
-        for comment in merge_iterators(
+    if parse.csv:
+        try:
+            with open(parse.csv, newline='', encoding="utf-8") as csvfile:
+                reader = csv.DictReader(csvfile)
+                rows = list(reader)
+        except UnicodeDecodeError:
+            print("CSV file must be UTF-8 encoded")
+            exit()
+        except FileNotFoundError:
+            print("CSV file not found")
+            exit()
+        except csv.Error:
+            print("CSV file is malformed")
+            exit()
+        progress_bar = alive_bar(len(rows))
+        iterator = reddit.info(fullnames=["t1_" + i["id"] for i in rows])
+    else:
+        progress_bar = alive_bar(unknown="stars")
+        iterator = merge_iterators(
             me.comments.controversial(limit=None),
             me.comments.hot(limit=None),
             me.comments.new(limit=None),
             me.comments.top(limit=None),
-        ):
+        )
+
+    # Save all discovered comments
+    with progress_bar as bar:
+        for comment in iterator:
             try:
                 comment: praw.models.Comment
 
@@ -246,15 +272,15 @@ if __name__ == "__main__":
                         comments_since_last_save = 1
                     else:
                         comments_since_last_save += 1
-            except (Exception,):
+            except (Exception,) as e:
                 try:
                     print(
-                        "Error parsing comment {}, skipping - {}".format(
-                            comment.id, comment.permalink
+                        "Error ({}) parsing comment {}, skipping - {}".format(
+                            repr(e), comment.id, comment.permalink
                         )
                     )
-                except (Exception,):
-                    print("Error parsing comment, skipping")
+                except (Exception,) as e:
+                    print("Error ({}) parsing comment, skipping)".format(repr(e)))
 
             # Progress Bar
             bar()
