@@ -354,7 +354,7 @@ if __name__ == "__main__":
 
     # Done
     print(
-        "Done! You can find the edited comments in the jobs/{}/ directory".format(
+        "Done! You can find the edited comments in the jobs/{} directory".format(
             JOB_ID
         )
     )
