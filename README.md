@@ -1,4 +1,6 @@
 # Reddit Mirror Edit
+[![Semi-Maintained](https://img.shields.io/badge/Maintenance%20Level-Semi--Maintained-yellowgreen.svg)](https://github.com/TheodoreHua/MaintenanceLevels#semi-maintained)
+
 This is a tool designed to meet my own needs, which allows for the mass editing of Reddit comments,
 while also creating a copy of your comments locally, and editing the comments with a link to (your own) site where you
 can choose to host the comments yourself. This allows for the removal of your data, without causing a detriment
@@ -35,9 +37,10 @@ edited to contain a link to the S3 instance, using the hash placeholder to link 
 Unfortunately, Reddit only allows you to get your past 1000 comments. Although this tool attempts to get more by
 using different sorting patterns (which may show additional comments), it is not guaranteed to get all of them.
 
-You can request a copy of your data from Reddit, which should include all of your comments. This would in theory
+You can request a copy of your data from Reddit, which should include all of your comments. ~~This would in theory
 allow you to use this tool to get everything, but I am still waiting on my data request at the time of writing this,
-so the feature is not yet implemented. It will be added in the future.
+so the feature is not yet implemented. It will be added in the future.~~ This feature has now been added, and can
+be used using the `--csv` parameter.
 
 ### I'm running this program again, how do I make sure it doesn't get my already edited comments?
 Pass in as much as your edit text as you can into the string whitelist. The functionality for passing in a JSON
